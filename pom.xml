@@ -30,7 +30,7 @@
   <url>http://www.kiji.org</url>
 
   <properties>
-    <avro.version>1.7.2</avro.version>
+    <avro.version>1.7.5</avro.version>
     <maven-compiler-plugin.version>2.3.2</maven-compiler-plugin.version>
     <maven-jar-plugin.version>2.3.1</maven-jar-plugin.version>
   </properties>
