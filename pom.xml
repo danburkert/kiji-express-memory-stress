@@ -20,13 +20,13 @@
   -->
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.kiji.express</groupId>
-  <artifactId>kiji-express-archetype</artifactId>
+  <groupId>org.kiji.express.memory</groupId>
+  <artifactId>memory-stress</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>Kiji Express Basic Project</name>
-  <description>A skeleton Kiji express project.</description>
+  <name>Kiji Express Memory Stress</name>
+  <description>Kiji Express jobs meant to test memory usage Express framework</description>
   <url>http://www.kiji.org</url>
 
   <properties>
