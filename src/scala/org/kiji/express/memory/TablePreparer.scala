@@ -54,39 +54,32 @@ class TablePreparer(uri: KijiURI, table: String) {
 object TablePreparer {
 
   def main(args: Array[String]) {
-//    val uri = KijiURI.newBuilder("kiji://localhost:2181/default/").build()
-//    val preparer = new TablePreparer(uri, "users")
-//    preparer.create()
-//    preparer.drop
-
-    println("*" * 100)
-    println("args: " + args.toList)
-
     val tool = new Tool
     tool.setConf(new Configuration())
     val opts = tool.parseModeArgs(args)._2
 
-    println("*" * 100)
-
-    println("opts: " + opts)
-
     val uri: KijiURI = if (opts.boolean("fake")) {
       new InstanceBuilder("default").build().getURI
     } else {
-      KijiURI.newBuilder(opts.getOrElse("uri", "kiji://localhost:2181/default/memory_stress"))
+      KijiURI.newBuilder(opts.getOrElse("uri", "kiji://localhost:2181/default/memory_stress")).build
     }
 
     val conf = doAndRelease(Kiji.Factory.open(uri))(kiji => kiji.getConf)
+
+    val preparer = new TablePreparer(uri, "memory_stress")
 
     if (opts.boolean("prepare")) {
       val rows: Int = opts.getOrElse("rows", "10000").toInt
       val versions: Int = opts.getOrElse("versions", "1").toInt
       val columns: Iterable[String] = opts.list("columns")
-
-      val preparer = new TablePreparer(uri, "memory_stress")
+      preparer.create
+      preparer.populate(rows, "default", columns, versions)
     }
 
     ToolRunner.run(conf, new Tool, args)
-  }
 
+    if (opts.boolean("cleanup")) {
+      preparer.drop
+    }
+  }
 }

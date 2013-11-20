@@ -4,7 +4,7 @@ WITH LOCALITY GROUP default (
   MAXVERSIONS = INFINITY,
   TTL = FOREVER,
   INMEMORY = false,
-  FAMILY info (
+  FAMILY default (
     string "string"
   )
 );
