@@ -30,9 +30,11 @@
   <url>http://www.kiji.org</url>
 
   <properties>
-    <kiji.express.version>0.9.0</kiji.express.version>
+    <kiji.express.version>0.13.0</kiji.express.version>
+    <kiji.schema.version>1.3.3</kiji.schema.version>
+    <kiji.schema.shell.version>1.3.1</kiji.schema.shell.version>
     <kiji.platform.version>1.3.0</kiji.platform.version>
-    <scala.version>2.9.2</scala.version>
+    <scala.version>2.9.3</scala.version>
     <avro.version>1.7.5</avro.version>
     <maven-compiler-plugin.version>2.3.2</maven-compiler-plugin.version>
     <maven-jar-plugin.version>2.3.1</maven-jar-plugin.version>
@@ -108,6 +110,10 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+      </plugin>
     </plugins>
   </build>
 
@@ -116,13 +122,21 @@
       <groupId>org.kiji.express</groupId>
       <artifactId>kiji-express</artifactId>
       <version>${kiji.express.version}</version>
-      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.kiji.schema</groupId>
+      <artifactId>kiji-schema</artifactId>
+      <version>${kiji.schema.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.kiji.schema-shell</groupId>
+      <artifactId>kiji-schema-shell</artifactId>
+      <version>${kiji.schema.shell.version}</version>
     </dependency>
     <dependency>
       <groupId>org.kiji.platforms</groupId>
       <artifactId>kiji-cdh4-platform</artifactId>
       <version>${kiji.platform.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.scala-lang</groupId>
