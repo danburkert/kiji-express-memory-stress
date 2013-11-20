@@ -11,6 +11,7 @@ atlassian-ide-plugin.xml
 # Maven things
 target/
 dependency-reduced-pom.xml
+pom.xml
 
 # Vim things
 *.swp
