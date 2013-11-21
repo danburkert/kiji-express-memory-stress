@@ -5,6 +5,7 @@ WITH LOCALITY GROUP default (
   TTL = FOREVER,
   INMEMORY = false,
   FAMILY default (
-    string "string"
+    string "string",
+    long "long"
   )
 );

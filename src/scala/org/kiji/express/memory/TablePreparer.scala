@@ -1,6 +1,5 @@
 package org.kiji.express.memory
 
-import scala.io.Source
 import scala.util.Random
 
 import org.kiji.express.flow.util.Resources._
@@ -9,10 +8,6 @@ import org.kiji.schema.KijiBufferedWriter
 import org.kiji.schema.KijiTable
 import org.kiji.schema.KijiURI
 import org.kiji.schema.shell.api.Client
-import com.twitter.scalding.Tool
-import org.apache.hadoop.util.ToolRunner
-import org.apache.hadoop.conf.Configuration
-import org.kiji.schema.util.InstanceBuilder
 
 class TablePreparer(uri: KijiURI, table: String) {
   def create(): Unit = {
@@ -27,7 +22,7 @@ class TablePreparer(uri: KijiURI, table: String) {
     Map("string" -> (() => rand.nextString(1024)))
   }
 
-  def populate(numRows: Int, family: String, columns: Iterable[String], versions: Int): Unit = {
+  def load(numRows: Int, family: String, columns: Iterable[String], versions: Int): Unit = {
     doAndRelease(Kiji.Factory.open(uri)) { kiji: Kiji =>
       doAndRelease(kiji.openTable(table)) { table: KijiTable =>
         doAndClose(table.getWriterFactory.openBufferedWriter()) { writer: KijiBufferedWriter =>
@@ -53,32 +48,51 @@ class TablePreparer(uri: KijiURI, table: String) {
 
 object TablePreparer {
 
+  case class Opts(
+      create: Boolean = false,
+      drop: Boolean = false,
+      load: Boolean = false,
+      rows: Int = 10000,
+      versions: Int = 1,
+      columns: Iterable[String] = List("string"),
+      uri: KijiURI = KijiURI.newBuilder("kiji://localhost:2181/default/memory_stress").build)
+
+  val parser = new scopt.OptionParser[Opts]("prepare") {
+    opt[Unit]("create") action { (_, o) =>
+      o.copy(create = true) } text("create the table.")
+    opt[Unit]("drop") action { (_, o) =>
+      o.copy(drop = true) } text("drop the table.")
+    opt[Unit]("load") action { (_, o) =>
+      o.copy(load = true) } text("load table with data.")
+    opt[Int]("rows") action { (i, o) =>
+      o.copy(rows = i) } text("number of rows to create.")
+    opt[Int]("versions") action { (i, o) =>
+      o.copy(versions = i) } text("number of versions per row.")
+    opt[String]("columns") action { (s, o) =>
+      o.copy(columns = s.split(',')) } text("columns to load, comma separated.")
+    opt[String]("uri") action { (s, o) =>
+      o.copy(uri = KijiURI.newBuilder(s).build) } text("URI of Kiji instance.")
+  }
+
   def main(args: Array[String]) {
-    val tool = new Tool
-    tool.setConf(new Configuration())
-    val opts = tool.parseModeArgs(args)._2
+    val opts = parser.parse(args, Opts()).get
 
-    val uri: KijiURI = if (opts.boolean("fake")) {
-      new InstanceBuilder("default").build().getURI
-    } else {
-      KijiURI.newBuilder(opts.getOrElse("uri", "kiji://localhost:2181/default/memory_stress")).build
-    }
+    println(opts)
 
-    val conf = doAndRelease(Kiji.Factory.open(uri))(kiji => kiji.getConf)
+    val preparer = new TablePreparer(opts.uri, "memory_stress")
 
-    val preparer = new TablePreparer(uri, "memory_stress")
-
-    if (opts.boolean("prepare")) {
-      val rows: Int = opts.getOrElse("rows", "10000").toInt
-      val versions: Int = opts.getOrElse("versions", "1").toInt
-      val columns: Iterable[String] = opts.list("columns")
+    if (opts.create) {
       preparer.create
-      preparer.populate(rows, "default", columns, versions)
     }
 
-    ToolRunner.run(conf, new Tool, args)
+    if (opts.load) {
+      val rows: Int = opts.rows
+      val versions: Int = opts.versions
+      val columns: Iterable[String] = opts.columns
+      preparer.load(rows, "default", columns, versions)
+    }
 
-    if (opts.boolean("cleanup")) {
+    if (opts.drop) {
       preparer.drop
     }
   }
