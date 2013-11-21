@@ -3,7 +3,7 @@
                  ["kiji-nightly" "https://repo.wibidata.com/artifactory/kiji-nightly"]]
   :plugins [[lein-scalac "0.1.0"]]
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.kiji.express/kiji-express "0.13.0"]
+                 [org.kiji.express/kiji-express "0.9.0"]
                  [org.kiji.schema/kiji-schema "1.3.3"]
                  [org.kiji.schema-shell/kiji-schema-shell "1.3.1"]
                  [org.kiji.platforms/kiji-cdh4-platform "1.3.0"]
