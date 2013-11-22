@@ -19,8 +19,8 @@ class TablePreparer(uri: KijiURI, table: String) {
 
   val valueGen: Map[String, () => Any] = {
     val rand: Random = new Random()
-    Map("string" -> (() => rand.nextString(1024)))
-    Map("longs" -> (() => rand.nextLong))
+    Map("string" -> (() => rand.nextString(1024)),
+        "longs" -> (() => rand.nextLong))
   }
 
   def load(numRows: Int, family: String, columns: Iterable[String], versions: Int): Unit = {
