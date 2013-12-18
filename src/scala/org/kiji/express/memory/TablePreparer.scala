@@ -20,18 +20,18 @@ class TablePreparer(uri: KijiURI, table: String) {
   val valueGen: Map[String, () => Any] = {
     val rand: Random = new Random()
     Map("string" -> (() => rand.nextString(1024)),
-        "longs" -> (() => rand.nextLong))
+        "long" -> (() => rand.nextLong()))
   }
 
   def load(numRows: Int, family: String, columns: Iterable[String], versions: Int): Unit = {
     doAndRelease(Kiji.Factory.open(uri)) { kiji: Kiji =>
       doAndRelease(kiji.openTable(table)) { table: KijiTable =>
         doAndClose(table.getWriterFactory.openBufferedWriter()) { writer: KijiBufferedWriter =>
-          for (
-            eid <- 0 until numRows;
-            column <- columns;
+          for {
+            eid <- 0 until numRows
+            column <- columns
             version <- 0 until versions
-          ) {
+          } {
             val entityId = table.getEntityId(eid: java.lang.Integer)
             writer.put(entityId, family, column, version, valueGen(column)())
           }

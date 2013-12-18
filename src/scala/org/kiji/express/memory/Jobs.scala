@@ -1,8 +1,8 @@
 package org.kiji.express.memory
 
-import com.twitter.scalding.{Tsv, Args}
+import com.twitter.scalding.{Job, IterableSource, NullSource, Tsv, Args}
 import org.kiji.express.flow._
-import scala.util.Random
+import org.kiji.express.flow.framework.hfile.{HFileKijiOutput, HFileKijiJob}
 
 /**
  * Counts the number of versions in each row of a column.
@@ -78,5 +78,34 @@ class WriteRandomLong(args: Args) extends KijiJob(args) {
     .read
     .map('a -> 'b) { a: Seq[_] => System.currentTimeMillis() }
     .write(KijiOutput(uri, Map('b -> outColumn)))
+}
 
+class HFile(args: Args) extends HFileKijiJob(args) {
+  val family = args.getOrElse("family", "default")
+  val inQualifier = args.getOrElse("inQualifier", "long")
+  val outQualifier = args.getOrElse("outQualifier", "long")
+  val uri = args.getOrElse("uri", "kiji://localhost:2181/default/memory_stress")
+
+  @transient val inColumn = QualifiedColumnInputSpec(family, inQualifier, all)
+  @transient val outColumn = QualifiedColumnOutputSpec(family, outQualifier)
+
+  KijiInput(uri, Map(inColumn -> 'a))
+      .read
+//      .map('a -> 'b) { a: Seq[_] => System.currentTimeMillis() }
+//      .write(HFileKijiOutput(uri, "hfiles1", Map('b -> outColumn)))
+//      .write(HFileKijiOutput(uri, "hfiles2", Map('b -> outColumn)))
+      .groupAll { group => group.size }
+      .insert('entityId, EntityId(42))
+      .write(HFileKijiOutput(uri, "hfiles1", Map('size -> outColumn)))
+
+//  IterableSource(1 to 10)
+//    .read
+//    .write(NullSource)
+}
+
+class NullJob(args: Args) extends HFileKijiJob(args) {
+  val p = IterableSource(1 to 10, 'a)
+    .read
+    .write(Tsv("fooz"))
+    .write(Tsv("barz"))
 }
