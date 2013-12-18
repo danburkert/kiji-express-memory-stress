@@ -1,6 +1,6 @@
 package org.kiji.express.memory
 
-import com.twitter.scalding.{Job, IterableSource, NullSource, Tsv, Args}
+import com.twitter.scalding.{IterableSource, Tsv, Args}
 import org.kiji.express.flow._
 import org.kiji.express.flow.framework.hfile.{HFileKijiOutput, HFileKijiJob}
 
@@ -15,10 +15,15 @@ class CountColumnVersions(args: Args) extends KijiJob(args) {
   val uri = args.getOrElse("uri", "kiji://localhost:2181/default/memory_stress")
   val out = args.getOrElse("output", "output/count-column-versions")
 
-  val column = QualifiedColumnInputSpec(family, qualifier, all, paging = PagingSpec.Cells(1000))
+  val column = QualifiedColumnInputSpec.builder
+      .withFamily(family)
+      .withQualifier(qualifier)
+      .withMaxVersions(all)
+      .withPagingSpec(PagingSpec.Cells(1000))
+      .build
   val output = Tsv(out)
 
-  KijiInput(uri, Map(column -> 'a))
+  KijiInput.builder.withTableURI(uri).withColumnSpecs(column -> 'a).build
     .read
     .mapTo('a -> 'count) { a: Seq[FlowCell[_]] => a.length }
     .write(output)
@@ -35,10 +40,15 @@ class CountColumnVersionsTwice(args: Args) extends KijiJob(args) {
   val uri = args.getOrElse("uri", "kiji://localhost:2181/default/memory_stress")
   val out = args.getOrElse("output", "output/count-column-versions-twice")
 
-  val column = QualifiedColumnInputSpec(family, qualifier, all, paging = PagingSpec.Cells(1000))
+  val column = QualifiedColumnInputSpec.builder
+      .withFamily(family)
+      .withQualifier(qualifier)
+      .withMaxVersions(all)
+      .withPagingSpec(PagingSpec.Cells(1000))
+      .build
   val output = Tsv(out)
 
-  KijiInput(uri, Map(column -> 'a))
+  KijiInput.builder.withTableURI(uri).withColumnSpecs(column -> 'a).build
       .read
       .mapTo('a -> 'count) { a: Seq[FlowCell[_]] => a.length }
       .write(output)
@@ -55,10 +65,15 @@ class CountColumnCells(args: Args) extends KijiJob(args) {
   val uri = args.getOrElse("uri", "kiji://localhost:2181/default/memory_stress")
   val out = args.getOrElse("output", "output/count-column-cells")
 
-  val column = QualifiedColumnInputSpec(family, qualifier, all, paging = PagingSpec.Cells(1000))
+  val column = QualifiedColumnInputSpec.builder
+      .withFamily(family)
+      .withQualifier(qualifier)
+      .withMaxVersions(all)
+      .withPagingSpec(PagingSpec.Cells(1000))
+      .build
   val output = Tsv(out)
 
-  KijiInput(uri, Map(column -> 'a))
+  KijiInput.builder.withTableURI(uri).withColumnSpecs(column -> 'a).build
     .read
     .flatten[Seq[FlowCell[_]]]('a -> 'b)
     .groupAll { _.size }
@@ -74,10 +89,10 @@ class WriteRandomLong(args: Args) extends KijiJob(args) {
   val inColumn = QualifiedColumnInputSpec(family, inQualifier, all)
   val outColumn = QualifiedColumnOutputSpec(family, outQualifier)
 
-  KijiInput(uri, Map(inColumn -> 'a))
+  KijiInput.builder.withTableURI(uri).withColumnSpecs(inColumn -> 'a).build
     .read
     .map('a -> 'b) { a: Seq[_] => System.currentTimeMillis() }
-    .write(KijiOutput(uri, Map('b -> outColumn)))
+    .write(KijiOutput.builder.withTableURI(uri).withColumnSpecs('b -> outColumn).build)
 }
 
 class HFile(args: Args) extends HFileKijiJob(args) {
@@ -89,7 +104,7 @@ class HFile(args: Args) extends HFileKijiJob(args) {
   @transient val inColumn = QualifiedColumnInputSpec(family, inQualifier, all)
   @transient val outColumn = QualifiedColumnOutputSpec(family, outQualifier)
 
-  KijiInput(uri, Map(inColumn -> 'a))
+  KijiInput.builder.withTableURI(uri).withColumnSpecs(inColumn -> 'a).build
       .read
 //      .map('a -> 'b) { a: Seq[_] => System.currentTimeMillis() }
 //      .write(HFileKijiOutput(uri, "hfiles1", Map('b -> outColumn)))
@@ -108,4 +123,18 @@ class NullJob(args: Args) extends HFileKijiJob(args) {
     .read
     .write(Tsv("fooz"))
     .write(Tsv("barz"))
+}
+
+class LoadLongs(args: Args) extends HFileKijiJob(args) {
+
+  val uri =  args.getOrElse("uri", "kiji://localhost:2181/default/memory_stress")
+
+  IterableSource(1 to 10000000, 'long)
+    .read
+    .map('long -> 'entityId)(n => EntityId(n))
+    .write(KijiOutput
+      .builder
+      .withTableURI(uri)
+      .addColumns('long -> "long")
+      .build)
 }
