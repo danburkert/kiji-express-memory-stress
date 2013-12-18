@@ -2,7 +2,7 @@ package org.kiji.express.memory
 
 import com.twitter.scalding.{IterableSource, Tsv, Args}
 import org.kiji.express.flow._
-import org.kiji.express.flow.framework.hfile.{HFileKijiOutput, HFileKijiJob}
+import org.kiji.express.flow.framework.hfile.{HFileKijiOutput}
 
 /**
  * Counts the number of versions in each row of a column.
@@ -95,7 +95,7 @@ class WriteRandomLong(args: Args) extends KijiJob(args) {
     .write(KijiOutput.builder.withTableURI(uri).withColumnSpecs('b -> outColumn).build)
 }
 
-class HFile(args: Args) extends HFileKijiJob(args) {
+class HFile(args: Args) extends KijiJob(args) {
   val family = args.getOrElse("family", "default")
   val inQualifier = args.getOrElse("inQualifier", "long")
   val outQualifier = args.getOrElse("outQualifier", "long")
@@ -118,23 +118,32 @@ class HFile(args: Args) extends HFileKijiJob(args) {
 //    .write(NullSource)
 }
 
-class NullJob(args: Args) extends HFileKijiJob(args) {
+class NullJob(args: Args) extends KijiJob(args) {
   val p = IterableSource(1 to 10, 'a)
     .read
     .write(Tsv("fooz"))
     .write(Tsv("barz"))
 }
 
-class LoadLongs(args: Args) extends HFileKijiJob(args) {
-
+class LoadLongs(args: Args) extends KijiJob(args) {
   val uri =  args.getOrElse("uri", "kiji://localhost:2181/default/memory_stress")
-
-  IterableSource(1 to 10000000, 'long)
+  Tsv(args("input"), 'long)
     .read
-    .map('long -> 'entityId)(n => EntityId(n))
+    .map('long -> 'long)((n: String) => n.toLong)
+    .map('long -> 'entityId)((n: Long) => EntityId(n))
     .write(KijiOutput
       .builder
       .withTableURI(uri)
-      .addColumns('long -> "long")
+      .addColumns('long -> "default:long")
       .build)
+}
+
+class LoadLongsHFile(args: Args) extends KijiJob(args) {
+  val uri =  args.getOrElse("uri", "kiji://localhost:2181/default/memory_stress")
+  val output = args.getOrElse("output", "hfile-output")
+  Tsv(args("input"), 'long)
+      .read
+      .map('long -> 'long)((n: String) => n.toLong)
+      .map('long -> 'entityId)((n: Long) => EntityId(n))
+      .write(HFileKijiOutput(uri, output, 'long -> "default:long"))
 }

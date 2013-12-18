@@ -2,7 +2,7 @@ package org.kiji.express.memory
 
 import scala.util.Random
 
-import org.kiji.express.flow.util.Resources._
+import org.kiji.express.flow.util.ResourceUtil._
 import org.kiji.schema.Kiji
 import org.kiji.schema.KijiBufferedWriter
 import org.kiji.schema.KijiTable
